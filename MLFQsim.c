@@ -54,7 +54,25 @@ void lower_priority(int qno)
  rear[qno-1]->link = NULL;     
 }
 
+void print_mlfq()
+{
+ int i;
+ process temp;
+ printf("Multi Level Feedback Queue:\n");
+ for(i=0; i<MAX_Q; i++)
+ {
+  printf("Level %d:", i);
+  for(temp=mlfq[i]->link; temp; temp=temp->link)
+  {
+   printf("\t%d", temp->pid);
+  }
+  printf("\n");  
+ }
+}
+
 int main()
 {
+ init_queue();
+ print_mlfq();
  return 0;
 }
