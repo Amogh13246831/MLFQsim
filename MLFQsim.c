@@ -34,24 +34,25 @@ void new_process(int p, int d)
  process temp = (process) malloc(sizeof(proc)); // allocate memory for a new process
  temp->pid = p;
  temp->duration = d;
- temp-> completed = 0;
+ temp->completed = 0;
  rear[0]->link = temp;   // add it to the top queue
  rear[0] = temp;
+ rear[0]->link = NULL;
 }
 
 void lower_priority(int qno)
 {
  process temp;
 
- if(qno == MAX_Q - 1)  // bottom cue
+ if(qno >= MAX_Q - 1)  // bottom cue or invalid
   return;
 
  temp = mlfq[qno]->link;    // front of queue to be removed from
  mlfq[qno]->link = temp->link;  // link to the next in queue
  
- rear[qno-1]->link = temp;    // add process to back of the lower queue
- rear[qno-1] = temp;
- rear[qno-1]->link = NULL;     
+ rear[qno+1]->link = temp;    // add process to back of the lower queue
+ rear[qno+1] = temp;
+ rear[qno+1]->link = NULL;     
 }
 
 void print_mlfq()
@@ -73,6 +74,16 @@ void print_mlfq()
 int main()
 {
  init_queue();
- print_mlfq();
+ int i, j;
+ for(i=0; i<10; i++)
+ {
+  new_process(i, i);
+  for(j=0; j<i; j++)
+  {
+   lower_priority(j);
+  }
+  print_mlfq();
+ }
+ //print_mlfq();
  return 0;
 }
