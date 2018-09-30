@@ -1,2 +1,2 @@
 # MLFQsim
-Multi Level Feedback Queue implementation for fun
+Multi Level Feedback Queue simulation for fun
