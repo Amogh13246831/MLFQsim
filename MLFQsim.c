@@ -3,7 +3,9 @@
 #include<stdio.h>
 #include<stdlib.h>
 
-#define MAX_Q 8
+#define MAX_Q 8              // max number of queues
+#define MAX_PROC 15          // max number of processes
+#define S 40                 // time after which all priorities raised to max
 
 typedef struct proc* process;
 typedef struct proc
@@ -16,6 +18,7 @@ typedef struct proc
 
 process mlfq[MAX_Q];  // the Multi Level Feedback Queue
 process rear[MAX_Q];  // point to the rear of the queue, to insert in O(1)
+int numproc = 0;      // number of processes in the system
 
 void init_queue()
 {
@@ -30,6 +33,14 @@ void init_queue()
  }
 }
 
+int top_queue()   // returns highest occupied queue number
+{
+ int i;
+ for(i=0; i<MAX_Q; i++)
+  if(mlfq[i]->duration)
+   return i;
+}
+
 void new_process(int p, int d)
 {
  process temp = (process) malloc(sizeof(proc)); // allocate memory for a new process
@@ -40,6 +51,7 @@ void new_process(int p, int d)
  rear[0] = temp;
  rear[0]->link = NULL;
  mlfq[0]->duration++;    // one more process in the queue
+ numproc++;
 }
 
 int run_process(process current, int time)
@@ -103,6 +115,7 @@ void terminate_process(int p) // terminate process given its pid
  }
 
  mlfq[i]->duration--;   // one less process in the queue
+ numproc--;
 }
 
 void fast_terminate(int qno, int p)   // terminate a process knowing which queue
@@ -120,6 +133,25 @@ void fast_terminate(int qno, int p)   // terminate a process knowing which queue
   }
  
  mlfq[qno]->duration--;   // one less process in the queue
+ numproc--;
+}
+
+void raise_all_priorities()  // rule 5: raise priority of all to max after time S
+{
+ int i; 
+ for(i=1; i<MAX_Q; i++)   // queues apart from max priority
+ {
+  if(rear[i] != mlfq[i])    // processes in queue
+  {
+   rear[0]->link = mlfq[i]->link; // chain of processes moved to back of top queue
+   mlfq[i]->link = NULL;                  // queue i is empty
+   rear[0] = rear[i];                      // rear points to end of chain
+   mlfq[0]->duration += mlfq[i]->duration;  // add number of processes
+   rear[i] = mlfq[i];                      // reinitialise for empty queue
+   mlfq[i]->duration = 0;                // same as above
+   
+  }
+ }
 }
 
 void print_mlfq()
@@ -140,7 +172,8 @@ void print_mlfq()
 
 void run_schedule()
 {
- process current, next; 
+ process current, next;
+ int Stime = 0; 
  int slot = 10, i;
  for(i=0; i<MAX_Q; i++)     // iterate over all queues
  {
@@ -148,6 +181,9 @@ void run_schedule()
   {
    for(current=mlfq[i]->link; current;)
    {
+    if(numproc == 0)
+     return;
+   
     next = current->link;       // current will be changed due to pointer manip
 
     if(run_process(current, slot))       // run process and if completed, move on
@@ -155,9 +191,18 @@ void run_schedule()
     else
      lower_priority(i, current);
 
+    Stime++;   // raise priority based on this time
+    if(Stime%S == 0)
+    {
+     raise_all_priorities();
+     i = 0;
+    }
+
     current = next;     // effectively next = next->link
 
     system("clear");    // print stuff
+    printf("\nProcesses: %d\n", numproc);
+    printf("Stime: %d\n\n", Stime);
     print_mlfq();
     sleep(1);
    }
@@ -170,8 +215,8 @@ int main()
  init_queue();
  int i, j;
  for(i=1; i<=6; i++)
-  new_process(i, 20*(i%3+2));
-
+  new_process(i, 25*(i%3+2));
+ system("clear");
  print_mlfq();
  sleep(1);
  run_schedule();
