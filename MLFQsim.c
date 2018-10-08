@@ -33,6 +33,15 @@ void init_queue()
  }
 }
 
+int queue_empty()
+{
+ int i;
+ for(i=0; i<MAX_Q; i++)
+  if(mlfq[i]->duration)
+   return 0;
+ return 1;
+}
+
 int top_queue()   // returns highest occupied queue number
 {
  int i;
@@ -171,16 +180,26 @@ void print_mlfq()
  }
 }
 
+void random_ps()      // randomly generate a process
+{
+ int chance = rand()%100;
+ if(numproc < MAX_PROC && chance < 20)
+  new_process(numproc+1, rand()%100);
+}
+
 void run_schedule()
 {
+ srand(time(NULL));
+
  process current, next;
  int Stime = 0; 
  int slot = 10, i;
- for(i=top_queue();;i=top_queue())  // select top non-empty queue, or queue 0
+ for(i=top_queue(); mlfq[i]->duration; i=top_queue()) // top queue, quits if empty
  {
-  if(numproc == 0)          // no processes left
-    return;
-   
+  random_ps();
+  if(queue_empty())
+   break;
+
   while(mlfq[i]->duration)       // queue still has processes
   {
    for(current=mlfq[i]->link; current;)
@@ -205,7 +224,7 @@ void run_schedule()
     printf("\nProcesses: %d\n", numproc);
     printf("Stime: %d\n\n", Stime);
     print_mlfq();
-    sleep(1);
+    sleep(0.1);
    }
   }
  }
